@@ -5,7 +5,6 @@
 172.28.2.10 master zhangyue0
 172.28.2.11 slave1 zhangyue1
 172.28.2.12 slave2 zhangyue2
-172.28.2.13 slave3 zhangyue3
 ```
 
 安装环境
