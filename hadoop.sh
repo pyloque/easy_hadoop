@@ -1,16 +1,24 @@
 vmname=$1
 hadoop_home=/usr/local/hadoop
 hadoop_etc=$hadoop_home/etc/hadoop
-if [ ! -f ~/.ssh/id_dsa ]
-then
-ssh-keygen -q -t dsa -P '' -f ~/.ssh/id_dsa
-cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
-fi
-cd $hadoop_home
-sed -i 's/\${JAVA_HOME}/\/usr\/lib\/jvm\/java-1.7.0-openjdk-amd64/g' $hadoop_etc/hadoop-env.sh
-mkdir -p ~/namenode
-mkdir -p ~/datanode
-cat << EOF >  $hadoop_etc/core-site.xml
+
+function write_ssh()
+{
+    if [ ! -f ~/.ssh/id_dsa ]
+    then
+    ssh-keygen -q -t dsa -P '' -f ~/.ssh/id_dsa
+    cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+    fi
+}
+
+function write_env()
+{
+    sed -i 's/\${JAVA_HOME}/\/usr\/lib\/jvm\/java-1.7.0-openjdk-amd64/g' $hadoop_etc/hadoop-env.sh
+}
+
+function write_core()
+{
+    cat << EOF >  $hadoop_etc/core-site.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
@@ -20,7 +28,11 @@ cat << EOF >  $hadoop_etc/core-site.xml
     </property>
 </configuration>
 EOF
-cat << EOF > $hadoop_etc/hdfs-site.xml
+}
+
+function write_hdfs()
+{
+    cat << EOF > $hadoop_etc/hdfs-site.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <property>
@@ -37,7 +49,11 @@ cat << EOF > $hadoop_etc/hdfs-site.xml
     </property>
 </configuration>
 EOF
-cat << EOF > $hadoop_etc/yarn-site.xml
+}
+
+function write_yarn()
+{
+    cat << EOF > $hadoop_etc/yarn-site.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <property>
@@ -70,7 +86,11 @@ cat << EOF > $hadoop_etc/yarn-site.xml
     </property>
 </configuration>
 EOF
-cat << EOF > $hadoop_etc/mapred-site.xml
+}
+
+function write_mapred()
+{
+    cat << EOF > $hadoop_etc/mapred-site.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <property>
@@ -87,17 +107,33 @@ cat << EOF > $hadoop_etc/mapred-site.xml
     </property>
 </configuration>
 EOF
-if [ "$vmname" == "zhangyue0" ]
-then
-    if [ ! -d ~/namenode/current ]
+}
+
+function start_hadoop()
+{
+    if [ "$vmname" == "zhangyue0" ]
     then
-    bin/hdfs namenode -format
+        if [ ! -d ~/namenode/current ]
+        then
+        bin/hdfs namenode -format
+        fi
+        sbin/hadoop-daemon.sh start namenode
+        sbin/yarn-daemon.sh start resourcemanager 
+        sbin/yarn-daemon.sh start proxyserver 
+        sbin/mr-jobhistory-daemon.sh start historyserver
+    else
+        sbin/hadoop-daemon.sh start datanode
+        sbin/yarn-daemon.sh start nodemanager
     fi
-    sbin/hadoop-daemon.sh start namenode
-    sbin/yarn-daemon.sh start resourcemanager 
-    sbin/yarn-daemon.sh start proxyserver 
-    sbin/mr-jobhistory-daemon.sh start historyserver
-else
-    sbin/hadoop-daemon.sh start datanode
-    sbin/yarn-daemon.sh start nodemanager
-fi
+}
+
+write_ssh
+cd $hadoop_home
+write_env
+mkdir -p ~/namenode
+mkdir -p ~/datanode
+write_core
+write_hdfs
+write_yarn
+write_mapred
+start_hadoop

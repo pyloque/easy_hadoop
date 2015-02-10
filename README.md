@@ -16,6 +16,11 @@ vagrant plugin install vagrant-cachier
 vagrant plugin install vagrant-proxyconf
 vagrant box add ubuntu/trusty64 <box_url>
 vagrant up
+vagrant ssh zhangyue0
+sudo su - hadoop
+cd /usr/local/spark
+echo "hadoop\nhadoop\n" | sbin/start-all.sh
+bin/spark-shell.sh
 ```
 
 跑任务
@@ -32,6 +37,7 @@ bin/hadoop dfs -get output output
 
 管理控制台
 ```
-http://172.28.2.10:8088/ hadoop resourcemanager webapp
-http://172.28.2.10:19888/ hadoop jobhistory webapp
+http://172.28.2.10:8088/ hadoop resourcemanager ui
+http://172.28.2.10:19888/ hadoop jobhistory ui
+http://172.28.2.10:8080/ spark web ui
 ```
